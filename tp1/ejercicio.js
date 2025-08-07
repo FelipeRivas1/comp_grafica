@@ -10,7 +10,6 @@ function index(x, y, width)
 
 function dither(image, factor, algorithm)
 {
-
     for (let y = 0; y < image.height; y++)
     {
         for (let x = 0; x < image.width; x++)
@@ -20,8 +19,12 @@ function dither(image, factor, algorithm)
             var new_pixel = find_closest_palette_color(old_pixel, factor)
             var quant_error = []
 
-            for (let i = 0; i < old_pixel.length; i++) {
+            for (let i = 0; i < 3; i++) {
                 quant_error.push(old_pixel[i] - new_pixel[i]);
+            }
+
+            for (let i = 0; i < 3; i++){
+                image.data[indices[i]] = new_pixel[i]
             }
 
             if (algorithm == "floyd-steinberg"){
@@ -30,6 +33,7 @@ function dither(image, factor, algorithm)
                 for (let i = 0; i < 3; i++){
                     image.data[i_xm1[i]] = image.data[i_xm1[i]] + quant_error[i] * 7/16
                 }
+                
                 
                 var i_xme1_ym1 = index(x-1, y+1, image.width)
                 for (let i = 0; i < 3; i++){
@@ -45,12 +49,11 @@ function dither(image, factor, algorithm)
                 for (let i = 0; i < 3; i++){
                     image.data[i_xm1_ym1[i]] = image.data[i_xm1_ym1[i]] + quant_error[i] * 1/16
                 }
-            }
-
+            }            
             
         }
     }
-
+    logColorCount(image);
 }
 
 function find_closest_palette_color(pixel, factor)
@@ -63,6 +66,7 @@ function find_closest_palette_color(pixel, factor)
     for (let i = 0; i <= factor; i++){
         intensidad.push(Math.ceil((i/factor) * 255));
     }
+    //console.log(`quant = ${intensidad}`)
     var new_r = 1e10;
     var new_g = 1e10;
     var new_b = 1e10;
@@ -88,6 +92,7 @@ function find_closest_palette_color(pixel, factor)
         }
     }
     let new_pixel = [new_r, new_g, new_b, pixel[3]];
+    //console.log(`new pixel = ${new_pixel}`)
     return new_pixel
 }
 
@@ -111,9 +116,3 @@ function substraction(imageA,imageB,result){
     }
 }
 
-
-
-//{0,255} 127
-//{0,128,255} f = 2
-//{0,64,128,192,255} f = 4
-//{0, 1/4 * 255, 2/4 * 255, 3/4 * 255, 4/4 * 255}
