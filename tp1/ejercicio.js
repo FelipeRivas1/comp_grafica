@@ -19,41 +19,60 @@ function dither(image, factor, algorithm)
             var new_pixel = find_closest_palette_color(old_pixel, factor)
             var quant_error = []
 
+            // error
             for (let i = 0; i < 3; i++) {
                 quant_error.push(old_pixel[i] - new_pixel[i]);
             }
 
+            // Actualizo la img
             for (let i = 0; i < 3; i++){
                 image.data[indices[i]] = new_pixel[i]
             }
-
-            if (algorithm == "floyd-steinberg"){
-
-                var i_xm1 = index(x+1, y, image.width)
-                for (let i = 0; i < 3; i++){
-                    image.data[i_xm1[i]] = image.data[i_xm1[i]] + quant_error[i] * 7/16
-                }
-                
-                
-                var i_xme1_ym1 = index(x-1, y+1, image.width)
-                for (let i = 0; i < 3; i++){
-                    image.data[i_xme1_ym1[i]] = image.data[i_xme1_ym1[i]] + quant_error[i] * 3/16
-                }
-
-                var i_ym1 = index(x, y+1, image.width)
-                for (let i = 0; i < 3; i++){
-                    image.data[i_ym1[i]] = image.data[i_ym1[i]] + quant_error[i] * 5/16
-                }
-
-                var i_xm1_ym1 = index(x+1, y+1, image.width)
-                for (let i = 0; i < 3; i++){
-                    image.data[i_xm1_ym1[i]] = image.data[i_xm1_ym1[i]] + quant_error[i] * 1/16
-                }
-            }            
             
+            // indices
+            var i_xm1 = index(x+1, y, image.width)
+            var i_xm2 = index(x+2, y, image.width)
+            var i_xme2_ym1 = index(x-2, y+1, image.width)
+            var i_xme1_ym1 = index(x-1, y+1, image.width)
+            var i_x_ym1 = index(x, y+1, image.width)
+            var i_xm1_ym1 = index(x+1, y+1, image.width)
+            var i_xm2_ym1 = index(x+2, y+1, image.width)
+            var i_xme2_ym2 = index(x-2, y+2, image.width)
+            var i_xme1_ym2 = index(x-1, y+2, image.width)
+            var i_x_ym2 = index(x, y+2, image.width)
+            var i_xm1_ym2 = index(x+1, y+2, image.width)
+            var i_xm2_ym2 = index(x+2, y+2, image.width)
+
+            if (algorithm === "floyd-steinberg"){
+                actualizar_pesos(image, i_xm1, 7/16, quant_error)
+                actualizar_pesos(image, i_xme1_ym1, 3/16, quant_error)
+                actualizar_pesos(image, i_x_ym1, 5/16, quant_error)
+                actualizar_pesos(image, i_xm1_ym1, 1/16, quant_error)
+
+            } else {
+                actualizar_pesos(image, i_xm1, 7/48, quant_error)
+                actualizar_pesos(image, i_xm2, 5/48, quant_error)
+                actualizar_pesos(image, i_xme2_ym1, 3/48, quant_error)
+                actualizar_pesos(image, i_xme1_ym1, 5/48, quant_error)
+                actualizar_pesos(image, i_x_ym1, 7/48, quant_error)
+                actualizar_pesos(image, i_xm1_ym1, 5/48, quant_error)
+                actualizar_pesos(image, i_xm2_ym1, 3/48, quant_error)
+                actualizar_pesos(image, i_xme2_ym2, 1/48, quant_error)
+                actualizar_pesos(image, i_xme1_ym2, 3/48, quant_error)
+                actualizar_pesos(image, i_x_ym2, 5/48, quant_error)
+                actualizar_pesos(image, i_xm1_ym2, 3/48, quant_error)
+                actualizar_pesos(image, i_xm2_ym2, 1/48, quant_error)
+
+            }
         }
     }
-    logColorCount(image);
+}
+
+function actualizar_pesos(image, indices, multiplicador, quant_error){
+    for (let i = 0; i < 3; i++){
+        image.data[indices[i]] = image.data[indices[i]] + quant_error[i] * multiplicador
+    }
+
 }
 
 function find_closest_palette_color(pixel, factor)
@@ -66,7 +85,6 @@ function find_closest_palette_color(pixel, factor)
     for (let i = 0; i <= factor; i++){
         intensidad.push(Math.ceil((i/factor) * 255));
     }
-    //console.log(`quant = ${intensidad}`)
     var new_r = 1e10;
     var new_g = 1e10;
     var new_b = 1e10;
@@ -92,7 +110,6 @@ function find_closest_palette_color(pixel, factor)
         }
     }
     let new_pixel = [new_r, new_g, new_b, pixel[3]];
-    //console.log(`new pixel = ${new_pixel}`)
     return new_pixel
 }
 
