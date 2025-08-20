@@ -26,7 +26,18 @@ Tip: Math.hypot(x, y, z) devuelve la magnitud de un vector.
 const Vec = {
   add:(a,b)=>[a[0]+b[0], a[1]+b[1], a[2]+b[2]],
   sub:(a,b)=>[a[0]-b[0], a[1]-b[1], a[2]-b[2]],
-  // Completar 
+  dot:(a,b)=> a[0]*b[0] + a[1]*b[1] + a[2]*b[2],
+  cross:(a,b)=> [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]], // para encontrar un vector perpen
+  norm:(v)=>Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2),
+  normalize:(v)=> {
+    let norm = Vec.norm(v)
+    if (norm === 0) return [0,0,0]
+    let v0 = v[0]/norm
+    let v1 = v[1]/norm
+    let v2 = v[2]/norm
+    return [v0,v1,v2]
+  },
+  scale:(v,c)=> [v[0]*c, v[1]*c, v[2]*c]
 };
 
 /* TODO: Implementar multiplicación de matrices 4x4 (orden column-major)
@@ -34,14 +45,36 @@ Ayuda: ver tp2.
 Ojo: mat4mul(A, B) implementa la multiplicación de matrices en el siguiente orden: AB
 */
 function mat4Mul(a,b){
+    matriz_res = Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
   
+    for ( let i = 0; i < 4; i++){
+      for (let j = 0; j < 4; j++){
+        let suma = 0
+        for(let k = 0; k < 4; k ++){
+  
+          let a_ik = a[k * 4 + i] 
+          let b_kj = b[j * 4 + k]
+          suma += a_ik * b_kj 
+        }
+  
+        matriz_res[j * 4 + i] = suma;
+      }
+    }
+    
+    return matriz_res;
 }
 
 /* TODO: Implementar multiplicación de matrices 4x4 (orden column-major)
 Ayuda: ver tp2.
 */
 function mat4Vec4(m, v){
-  
+  let vec_res = Array(0,0,0,0)
+  for(let i = 0; i < 4; i++){
+    for (let j = 0; j < 4; j++){
+      vec_res[i] += m[j * 4 + i] * v[j] 
+    }
+  }
+  return vec_res
 }
 
 /* TODO: Implementar la matriz de vista (lookAt).
@@ -62,6 +95,17 @@ Notar que:
 */
 function lookAt(eye, center, up){
 
+    let f = Vec.scale(Vec.normalize(Vec.sub(center, eye)), -1); // esto es w
+    let s = Vec.normalize(Vec.cross(up, f)); // u
+    let u = Vec.cross(f,s); // v
+
+    mat_rotacion = Array(s[0], u[0], f[0], 0, s[1], u[1], f[1], 0, s[2], u[2], f[2], 0, 0, 0, 0, 1);
+    mat_translacion = Array(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -eye[0], -eye[1], -eye[2], 1);
+
+    mat_res = mat4Mul(mat_rotacion, mat_translacion);
+
+    return mat_res;
+
 }
 
 /* TODO: Implementar la matriz de proyección ortográfica
@@ -71,7 +115,8 @@ al espacio NDC (Normalized Device Coordinates):
   x_ndc, y_ndc ∈ [-1, 1]   y   z_ndc ∈ [-1, 1]  donde la cámara apunta hacia -Z.
 */
 function orthographic(left, right, bottom, top, znear, zfar){
-
+  mat_res = Array(2/(right-left), 0, 0, 0, 0, 2/(top-bottom), 0, 0, 0, 0, 2/(znear - zfar), 0, -1*((right+left)/(right-left)), -1* ((top+bottom)/(top-bottom)), -1*((znear+zfar)/(znear-zfar)), 1)
+  return mat_res
 }
 /* TODO: Implementar la matriz de proyección perspectiva,
 La transformación proyectiva que lleva del view frustrum a NDC 
@@ -83,7 +128,7 @@ Los parámetros son:
 Ayuda: ver apunte del campus.
 */
 function perspective(fovYdeg, aspect, znear, zfar){
-
+  
 }
 
 
