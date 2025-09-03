@@ -352,4 +352,4 @@ function render() {
   if (typeof drawWorldView === 'function') {
     drawWorldView(eye, center, up, fov, W/H, zn, zf, ui.az, ui.el, projectionType);
   }
-}
+}}

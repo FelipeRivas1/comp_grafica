@@ -2,7 +2,18 @@
 // Recibe los strings de cada shader y retorna un programa
 function InitShaderProgram(gl, vsSource, fsSource )
 {
-	// Completar
+    var vertex_shader = CompileShader(gl, gl.VERTEX_SHADER, vsSource)
+    var fragment_shader = CompileShader(gl, gl.FRAGMENT_SHADER, fsSource)
+
+	prog = gl.createProgram();
+    gl.attachShader(prog, vertex_shader);
+    gl.attachShader(prog, fragment_shader);
+    gl.linkProgram(prog);
+    // Verifico si el link fue exitoso
+    if ( ! gl.getProgramParameter(prog, gl.LINK_STATUS) ){
+        alert( gl.getProgramInfoLog(prog) );
+    }
+
 	return prog;
 }
 
@@ -10,7 +21,16 @@ function InitShaderProgram(gl, vsSource, fsSource )
 // y el código en forma de string. Es llamada por InitShaderProgram()
 function CompileShader(gl, type, source )
 {
-	// Completar
+	const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+
+    // Verifico que la compilación haya sido exitosa
+    if ( ! gl.getShaderParameter(shader, gl.COMPILE_STATUS) ){
+        alert( gl.getShaderInfoLog(shader) );
+        gl.deleteShader(shader);
+    }
+
 	return shader;
 }
 
@@ -95,18 +115,44 @@ window.onload = function()
 
     // Creación y binding de los buffers:
     // Buffer para posición
-    // Completar
+    var position_buffer = gl.createBuffer();
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        position_buffer );
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        positions,
+        gl.STATIC_DRAW );
 
-    // Buffer para colores
-    // Completar
+    // Buffer para los colores
+    var color_buffer = gl.createBuffer();
+    gl.bindBuffer(
+        gl.ARRAY_BUFFER,
+        color_buffer );
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        colors,
+        gl.STATIC_DRAW );
+
     
     /******* SHADERS *******/
     const vshader = `
-        Completar
+        attribute vec3 pos;
+        attribute vec3 clr;
+        uniform mat4 camera;
+        varying vec4 vcolor;
+        void main(){
+            gl_Position = camera * vec4(pos,1);
+            vcolor = vec4(clr, 1);
+        }
         `;
 
     const fshader = `
-        Completar
+        precision mediump float;
+        varying vec4 vcolor;
+        void main(){
+            gl_FragColor = vcolor;
+        }
     `;
 
     /******* COMPILAMOS LOS SHADERS *******/
@@ -114,7 +160,18 @@ window.onload = function()
     gl.useProgram(program);
 
     /******* LINKEAMOS LOS BUFFERS DE LA ESCENA *******/
-    // Completar: linkear shaders para posición y color
+    // Link atributo posición
+    var p = gl.getAttribLocation(program, 'pos');
+    gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
+    gl.vertexAttribPointer(p, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(p);
+
+    // Link atributo color
+    var c = gl.getAttribLocation(program, 'clr');
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+    gl.vertexAttribPointer(c, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(c);
+
 
     /******* REENDERIZAMOS  *******/
     // Configuración de la escena
