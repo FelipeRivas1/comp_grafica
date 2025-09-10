@@ -19,7 +19,7 @@ class CurveDrawer
 		this.p = [ this.uP0, this.uP1, this.uP2, this.uP3 ];
 
 		// Muestreo del parámetro t
-		this.steps = 100;
+		this.steps = 1000;
 		var tv = [];
 		for ( var i=0; i<this.steps; ++i ) {
 			tv.push( i / (this.steps-1) );
@@ -82,7 +82,7 @@ class CurveDrawer
 
 		// Dibujamos lineas utilizando primitivas gl.LINE_STRIP 
 		// https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawArrays
-		gl.drawArrays( gl.LINE_STRIP, 0, this.steps );
+		gl.drawArrays( gl.POINTS, 0, this.steps );
 	}
 }
 
@@ -93,6 +93,7 @@ class CurveDrawer
 // en punto flotante necesitan ser expresadas como X.Y, incluso si son enteros: ejemplo, para 4 escribimos 4.0
 var curvesVS = `
 	attribute float t;
+	varying float t_varying;
 	uniform mat4 mvp;
 	uniform vec2 p0;
 	uniform vec2 p1;
@@ -107,15 +108,27 @@ var curvesVS = `
 		float t3 = t2 * t;
 		vec2 B = u3 * p0 + 3.0 * u2 * t * p1 + 3.0 * u * t2 * p2 + t3 * p3;
 		gl_Position = mvp * vec4(B, 0.0, 1.0);
+		gl_PointSize = 500.0 * t;
+		t_varying = t;
+		
 	}
 `;
 
 // Fragment Shader
 var curvesFS = `
 	precision mediump float;
-	void main()
-	{
-		gl_FragColor = vec4(0,0,1,1);
+	varying float t_varying;
+
+	vec3 hsv2rgb(vec3 c){
+		vec3 p = abs(fract(c.xxx + vec3(0.0, 2.0/3.0, 1.0/3.0))*6.0 - 3.0);
+		vec3 rgb = c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
+		return rgb;
+	}
+
+	void main() {
+	// h rueda 0..1 con t_varying, s y v fijos
+		vec3 c = hsv2rgb(vec3(t_varying, 0.8, 0.9));
+		gl_FragColor = vec4(c, 1.0);
 	}
 `;
 
